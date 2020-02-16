@@ -61,8 +61,9 @@ void test(void *pvParameter) {
     DS18B20_Info device;
     ds18b20_init_solo(&device, bus);
 
+    auto resolution = DS18B20_RESOLUTION::DS18B20_RESOLUTION_10_BIT;
     ds18b20_use_crc(&device, true);  // enable CRC check for temperature readings
-    // ds18b20_set_resolution(&device, DS18B20_RESOLUTION::DS18B20_RESOLUTION_10_BIT);
+    ds18b20_set_resolution(&device, resolution);
 
     while (true) {
         bool is_present = false;
@@ -72,8 +73,24 @@ void test(void *pvParameter) {
 
         vTaskDelay(200 / portTICK_RATE_MS);
 
-        float temperature = 0.0f;
-        ds18b20_read_temp(&device, &temperature);
+        owb_reset(bus, &is_present);
+        owb_write_byte(bus, OWB_ROM_SKIP);
+        owb_write_byte(bus, 0xbe);
+
+        uint8_t buffer[9] = {0};
+        owb_read_bytes(bus, buffer, 9);
+
+        uint8_t lsb = buffer[0];
+        uint8_t msb = buffer[1];
+
+        if (owb_crc8_bytes(0, buffer, 9) != 0) {
+            lsb = 0x00;
+            msb = 0x80;
+        }
+        static const uint8_t lsb_mask[4] = {uint8_t(~0x07), uint8_t(~0x03), uint8_t(~0x01), uint8_t(~0x00)};
+        uint8_t lsb_masked = lsb_mask[resolution - DS18B20_RESOLUTION_9_BIT] & lsb;
+        int16_t raw = (msb << 8) | lsb_masked;
+        float temperature = raw / 16.0f;
 
         printf("Temperature readings (degrees C): %f\n", temperature);
     }
