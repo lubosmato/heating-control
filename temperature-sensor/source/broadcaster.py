@@ -1,5 +1,5 @@
-import bluetooth
 import utime as time
+import bluetooth
 
 _ADV_TYPE_FLAGS = b"\x01"
 _ADV_TYPE_NAME = b"\x09"
@@ -11,24 +11,18 @@ _CHARACTERISTIC_UUID_TEMPERATURE = b"\x2a\x6e"
 class Broadcaster:
     ERROR_TEMPERATURE = -273.15
 
-    def __init__(self, advertising_ms: int):
+    def __init__(self, broadcast_duration_ms: int):
         self._ble = bluetooth.BLE()
-        self._advertising_ms = advertising_ms
+        self._ble.active(True)
+        self._duration = broadcast_duration_ms
 
     def broadcast(self, temperature: float):
         """
-        BUG: When called repeatedly (~32 times) device will cause PANIC RESET.
-        Probably due to a bug in Micropython (or nimble BLE implementation).
-        Error message:
-            assertion "rc == 0" failed: file "/home/micropython/esp-idf-v4/components/bt/host/nimble/nimble/nimble/host/src/ble_hs.c", line 576, function: ble_hs_event_start_stage2
-            abort() was called at PC 0x4016a043 on core 1
-
         :param temperature: temperature to broadcast
         """
-        self._ble.active(True)
         payload = self.make_advertising_payload(temperature)
-        self._ble.gap_advertise(100000, adv_data=payload, connectable=False)
-        time.sleep_ms(self._advertising_ms)
+        self._ble.gap_advertise(20000, adv_data=payload, connectable=True)
+        time.sleep_ms(self._duration)
         self._ble.gap_advertise(None)
 
     def make_advertising_payload(self, temperature: float):
