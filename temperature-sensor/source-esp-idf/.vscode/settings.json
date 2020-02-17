@@ -49,7 +49,9 @@
     "thread": "cpp",
     "cinttypes": "cpp",
     "utility": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "optional": "cpp",
+    "shared_mutex": "cpp"
   },
   "editor.formatOnSave": true
 }
