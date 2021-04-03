@@ -179,8 +179,22 @@ void test(void *pvParameter) {
     esp_restart();
 }
 
+void structuredBinding(void *) {
+    auto test = []() {
+        printf("Test\n");
+    };
+
+    test();
+    auto [a, b] = std::tuple<double, int>{10.5, 5};
+    printf("%f %d\n", a, b);
+
+    vTaskDelay(5000 / portTICK_RATE_MS);
+    esp_restart();
+}
+
 extern "C" void app_main() {
     nvs_flash_init();
     // xTaskCreate(&mainTask, "mainTask", 2048, NULL, 5, NULL);
-    xTaskCreate(&test, "test", 2048, NULL, 5, NULL);
+    // xTaskCreate(&test, "test", 2048, NULL, 5, NULL);
+    xTaskCreate(&structuredBinding, "structuredBinding", 2048, NULL, 5, NULL);
 }
